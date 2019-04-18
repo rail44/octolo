@@ -1,8 +1,9 @@
+use byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
+use clap::{Arg, App, SubCommand, AppSettings};
+use serde::{Serialize, Deserialize};
 use std::io::{self, Read, Write};
 use std::process::Command;
 use std::path::Path;
-use byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
-use serde::{Serialize, Deserialize};
 use std::panic;
 
 #[derive(Deserialize, Debug)]
@@ -59,7 +60,7 @@ fn write_output<W: Write, S: Serialize>(mut output: W, value: &S) -> io::Result<
     Ok(())
 }
 
-fn main() {
+fn receive() {
     panic::set_hook(Box::new(|p| {
         write_output(io::stdout(), &format!("{}", p)).unwrap();
     }));
@@ -80,4 +81,22 @@ fn main() {
     };
 
     write_output(io::stdout(), &output).unwrap();
+}
+
+fn manifest() {
+}
+
+fn main() {
+    let matches = App::new("octoro")
+        .setting(AppSettings::AllowExternalSubcommands)
+        .version("0.1.0")
+        .about("Receive native messaging from browser to open local editor")
+        .subcommand(SubCommand::with_name("manifest")
+            .unset_setting(AppSettings::AllowExternalSubcommands)
+            .about("Generate and place native manifest"))
+        .get_matches();
+    if let Some(_) = matches.subcommand_matches("manifest") {
+        manifest();
+    }
+    receive();
 }
