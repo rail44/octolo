@@ -1,3 +1,4 @@
+const path = require("path");
 const TerserPlugin = require("terser-webpack-plugin");
 
 module.exports = {
@@ -27,7 +28,8 @@ module.exports = {
     background: "./src/background.ts"
   },
   output: {
-    filename: "[name].js"
+    filename: "[name].js",
+    path: path.resolve(__dirname, 'pkg/dist')
   },
   mode: "development",
   optimization: {

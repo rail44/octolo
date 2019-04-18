@@ -24,7 +24,7 @@ function getMessage(url: URL): Message | undefined {
     user,
     repository,
     revision,
-    path,
+    path
   };
 
   const line = Number(url.hash.substring(2));
@@ -55,14 +55,12 @@ chrome.contextMenus.create({
   }
 });
 
-chrome.contextMenus.create(
-  {
-    id: "remote-open-page",
-    title: "Open with external editor",
-    contexts: ["page"],
-    documentUrlPatterns: ["*://github.com/*/blob*"],
-    onclick: ({pageUrl}) => {
-      send(pageUrl!);
-    }
-  },
-);
+chrome.contextMenus.create({
+  id: "remote-open-page",
+  title: "Open with external editor",
+  contexts: ["page"],
+  documentUrlPatterns: ["*://github.com/*/blob*"],
+  onclick: ({ pageUrl }) => {
+    send(pageUrl!);
+  }
+});
