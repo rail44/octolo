@@ -1,9 +1,9 @@
+use clap::arg_enum;
 use dirs::home_dir;
 use serde::Serialize;
 use std::env::current_exe;
 use std::fs::{create_dir_all, File};
 use std::io::stdout;
-use clap::arg_enum;
 
 arg_enum! {
     pub enum Browser {
