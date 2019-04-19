@@ -1,3 +1,6 @@
+#![feature(custom_attribute)]
+
+use failure::Fail;
 use byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
 use clap::{Arg, App, SubCommand, AppSettings};
 use serde::{Serialize, Deserialize};
@@ -5,6 +8,9 @@ use std::io::{self, Read, Write};
 use std::process::Command;
 use std::path::Path;
 use std::panic;
+
+mod manifest;
+use manifest::manifest;
 
 #[derive(Deserialize, Debug)]
 struct Input {
@@ -21,21 +27,33 @@ struct Output {
     stderr: String,
 }
 
-fn get_ghq_root() -> Option<String> {
+#[derive(Serialize)]
+struct ErrorOutput {
+    error: String,
+}
+
+#[derive(Fail, Debug)]
+pub enum Error {
+    #[fail(display = "Could not get ghq.root")]
+    CouldNotGetGhqRoot,
+    #[fail(display = "Could not determine home dir")]
+    CouldNotDetermineHomeDir,
+}
+
+fn get_ghq_root() -> Result<String, failure::Error> {
     let output = Command::new("git")
         .arg("config")
         .arg("--get")
         .arg("--path")
         .arg("--null")
         .arg("ghq.root")
-        .output()
-        .unwrap();
-    let mut s = String::from_utf8(output.stdout).unwrap();
+        .output()?;
+    let mut s = String::from_utf8(output.stdout)?;
     s.pop();
     if s.len() == 0 {
-        return None;
+        return Err(Error::CouldNotGetGhqRoot.into());
     }
-    Some(s)
+    Ok(s)
 }
 
 fn read_input<R: Read>(mut input: R) -> io::Result<Input> {
@@ -60,30 +78,27 @@ fn write_output<W: Write, S: Serialize>(mut output: W, value: &S) -> io::Result<
     Ok(())
 }
 
-fn receive() {
+fn receive() -> Result<(), failure::Error> {
     panic::set_hook(Box::new(|p| {
-        write_output(io::stdout(), &format!("{}", p)).unwrap();
+        write_output(io::stdout(), &ErrorOutput{error: format!("{}", p).to_string()}).unwrap();
     }));
 
-    let root = get_ghq_root().unwrap();
-    let req = read_input(io::stdin()).unwrap();
+    let root = get_ghq_root()?;
+    let req = read_input(io::stdin())?;
     let path = Path::new(&root).join("github.com").join(req.user).join(req.repository).join(req.path);
 
     let output = Command::new("/usr/local/bin/code")
         .arg("-g")
         .arg(format!("{}:{}", path.to_str().unwrap(), req.line.unwrap_or(0)))
-        .output()
-        .unwrap();
+        .output()?;
 
     let output = Output {
-        stdout: String::from_utf8(output.stdout).unwrap(),
-        stderr: String::from_utf8(output.stderr).unwrap(),
+        stdout: String::from_utf8(output.stdout)?,
+        stderr: String::from_utf8(output.stderr)?,
     };
 
-    write_output(io::stdout(), &output).unwrap();
-}
-
-fn manifest() {
+    write_output(io::stdout(), &output)?;
+    Ok(())
 }
 
 fn main() {
@@ -96,7 +111,8 @@ fn main() {
             .about("Generate and place native manifest"))
         .get_matches();
     if let Some(_) = matches.subcommand_matches("manifest") {
-        manifest();
+        manifest().unwrap();
+        return;
     }
-    receive();
+    receive().unwrap();
 }
