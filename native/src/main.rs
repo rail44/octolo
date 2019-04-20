@@ -1,12 +1,13 @@
 #![feature(custom_attribute)]
 
-use clap::{value_t_or_exit, App, AppSettings, Arg, SubCommand};
-use failure::Fail;
-
 mod browser;
-use browser::{manifest, Browser};
-
+mod config;
 mod receive;
+
+use browser::manifest;
+use clap::{App, AppSettings, Arg, SubCommand};
+use config::read_config;
+use failure::Fail;
 use receive::receive;
 
 #[derive(Fail, Debug)]
@@ -15,9 +16,12 @@ pub enum Error {
     CouldNotGetGhqRoot,
     #[fail(display = "Could not determine home dir")]
     CouldNotDetermineHomeDir,
+    #[fail(display = "Could not determine config dir")]
+    CouldNotDetermineConfigDir,
 }
 
 fn main() {
+    let config = read_config().unwrap();
     let matches = App::new("octoro")
         .setting(AppSettings::AllowExternalSubcommands)
         .version("0.1.0")
@@ -27,13 +31,6 @@ fn main() {
                 .unset_setting(AppSettings::AllowExternalSubcommands)
                 .about("Generate and place native manifest")
                 .arg(
-                    Arg::with_name("browser")
-                        .possible_values(&Browser::variants())
-                        .short("b")
-                        .required(true)
-                        .takes_value(true),
-                )
-                .arg(
                     Arg::with_name("write")
                         .short("w")
                         .help("Write manifest insted of show"),
@@ -41,10 +38,9 @@ fn main() {
         )
         .get_matches();
     if let Some(c) = matches.subcommand_matches("manifest") {
-        let browser = value_t_or_exit!(c.value_of("browser"), Browser);
         let write = c.is_present("write");
-        manifest(browser, write).unwrap();
+        manifest(config.browser, write).unwrap();
         return;
     }
-    receive().unwrap();
+    receive(config).unwrap();
 }

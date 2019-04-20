@@ -1,16 +1,14 @@
-use clap::arg_enum;
 use dirs::home_dir;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::env::current_exe;
 use std::fs::{create_dir_all, File};
-use std::io::stdout;
+use std::io::{stdout, BufWriter};
 
-arg_enum! {
-    pub enum Browser {
-        FireFox,
-        Chrome,
-        Chromium,
-    }
+#[derive(Deserialize, Serialize)]
+pub enum Browser {
+    FireFox,
+    Chrome,
+    Chromium,
 }
 
 impl Browser {
@@ -95,7 +93,7 @@ pub fn manifest(browser: Browser, write: bool) -> Result<(), failure::Error> {
         create_dir_all(&path)?;
         let filename = path.join(FILE_NAME);
         let file = File::create(&filename)?;
-        serde_json::to_writer_pretty(file, &manifest)?;
+        serde_json::to_writer_pretty(BufWriter::new(file), &manifest)?;
         println!("Wrote manifest to {}", filename.to_str().unwrap());
         return Ok(());
     }
