@@ -40,8 +40,9 @@ fn main() {
             SubCommand::with_name("config")
                 .setting(AppSettings::SubcommandRequired)
                 .unset_setting(AppSettings::AllowExternalSubcommands)
-                    .subcommand(SubCommand::with_name("dump")
-                        .about("Dump full config with optional fields"))
+                .subcommand(
+                    SubCommand::with_name("dump").about("Dump full config with optional fields"),
+                ),
         )
         .get_matches();
     if let Some(c) = matches.subcommand_matches("manifest") {

@@ -1,9 +1,9 @@
 use dirs::home_dir;
 use serde::{Deserialize, Serialize};
 use std::env::current_exe;
+use std::fmt;
 use std::fs::{create_dir_all, File};
 use std::io::{stdout, BufWriter};
-use std::fmt;
 
 #[derive(Deserialize, Serialize)]
 pub enum Browser {
@@ -98,9 +98,9 @@ static FILE_NAME: &str = "jp.rail44.octolo.json";
 
 pub fn manifest(browser_list: Vec<Browser>, write: bool) -> Result<(), failure::Error> {
     let home = home_dir().ok_or(crate::Error::CouldNotDetermineHomeDir)?;
-    let manifest_list = browser_list.iter().map(|browser| {
-        (browser, Manifest::new(browser))
-    });
+    let manifest_list = browser_list
+        .iter()
+        .map(|browser| (browser, Manifest::new(browser)));
     for (browser, manifest) in manifest_list {
         let manifest = manifest?;
         if write {
@@ -109,7 +109,11 @@ pub fn manifest(browser_list: Vec<Browser>, write: bool) -> Result<(), failure::
             let filename = path.join(FILE_NAME);
             let file = File::create(&filename)?;
             serde_json::to_writer_pretty(BufWriter::new(file), &manifest)?;
-            println!("Wrote manifest for {} to {}", browser, filename.to_str().unwrap());
+            println!(
+                "Wrote manifest for {} to {}",
+                browser,
+                filename.to_str().unwrap()
+            );
             continue;
         }
         println!("// manifest for {}", browser);
