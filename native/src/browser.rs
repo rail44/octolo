@@ -3,12 +3,23 @@ use serde::{Deserialize, Serialize};
 use std::env::current_exe;
 use std::fs::{create_dir_all, File};
 use std::io::{stdout, BufWriter};
+use std::fmt;
 
 #[derive(Deserialize, Serialize)]
 pub enum Browser {
     FireFox,
     Chrome,
     Chromium,
+}
+
+impl fmt::Display for Browser {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            &Browser::FireFox => write!(f, "FireFox"),
+            &Browser::Chrome => write!(f, "Chrome"),
+            &Browser::Chromium => write!(f, "Chromium"),
+        }
+    }
 }
 
 impl Browser {
@@ -60,17 +71,17 @@ enum Manifest {
 
 impl Manifest {
     #[cfg(target_family = "unix")]
-    pub fn new(browser: Browser) -> Result<Self, failure::Error> {
+    pub fn new(browser: &Browser) -> Result<Self, failure::Error> {
         let path = current_exe()?.to_str().unwrap().to_string();
         Ok(match browser {
-            Browser::FireFox => Manifest::FireFox {
+            &Browser::FireFox => Manifest::FireFox {
                 name: "jp.rail44.octolo".to_string(),
                 description: "Open files with local editor from GitHub web".to_string(),
                 path,
                 _type: "stdio".to_string(),
                 allowed_extensions: vec!["{3de89a2b-180a-427e-85dd-29c983e93ba3}".to_string()],
             },
-            Browser::Chrome | Browser::Chromium => Manifest::Chrome {
+            &Browser::Chrome | Browser::Chromium => Manifest::Chrome {
                 name: "jp.rail44.octolo".to_string(),
                 description: "Open files with local editor from GitHub web".to_string(),
                 path,
@@ -85,18 +96,26 @@ impl Manifest {
 
 static FILE_NAME: &str = "jp.rail44.octolo.json";
 
-pub fn manifest(browser: Browser, write: bool) -> Result<(), failure::Error> {
+pub fn manifest(browser_list: Vec<Browser>, write: bool) -> Result<(), failure::Error> {
     let home = home_dir().ok_or(crate::Error::CouldNotDetermineHomeDir)?;
-    let path = home.join(browser.get_manifest_dir());
-    let manifest = Manifest::new(browser)?;
-    if write {
-        create_dir_all(&path)?;
-        let filename = path.join(FILE_NAME);
-        let file = File::create(&filename)?;
-        serde_json::to_writer_pretty(BufWriter::new(file), &manifest)?;
-        println!("Wrote manifest to {}", filename.to_str().unwrap());
-        return Ok(());
+    let manifest_list = browser_list.iter().map(|browser| {
+        (browser, Manifest::new(browser))
+    });
+    for (browser, manifest) in manifest_list {
+        let manifest = manifest?;
+        if write {
+            let path = home.join(browser.get_manifest_dir());
+            create_dir_all(&path)?;
+            let filename = path.join(FILE_NAME);
+            let file = File::create(&filename)?;
+            serde_json::to_writer_pretty(BufWriter::new(file), &manifest)?;
+            println!("Wrote manifest for {} to {}", browser, filename.to_str().unwrap());
+            continue;
+        }
+        println!("// manifest for {}", browser);
+        serde_json::to_writer_pretty(stdout(), &manifest)?;
+        println!("");
+        println!("");
     }
-    serde_json::to_writer_pretty(stdout(), &manifest)?;
     Ok(())
 }

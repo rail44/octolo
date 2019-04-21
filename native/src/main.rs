@@ -46,7 +46,7 @@ fn main() {
         .get_matches();
     if let Some(c) = matches.subcommand_matches("manifest") {
         let write = c.is_present("write");
-        manifest(config.browser, write).unwrap();
+        manifest(config.browser_list, write).unwrap();
         return;
     }
     if let Some(c) = matches.subcommand_matches("config") {

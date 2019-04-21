@@ -12,7 +12,7 @@ static FILE_PATH: &str = "octolo/octolo.toml";
 
 #[derive(Deserialize, Serialize)]
 pub struct Config {
-    pub browser: Browser,
+    pub browser_list: Vec<Browser>,
     #[serde(default = "get_default_root")]
     pub root: String,
     #[serde(default = "get_default_path")]
