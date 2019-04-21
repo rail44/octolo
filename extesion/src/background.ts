@@ -1,3 +1,6 @@
+const MENU_TITLE = "Open with local editor";
+const GITHUB_URL_PATTERN = "*://github.com/*/blob*";
+
 interface Message {
   user: string;
   repository: string;
@@ -34,33 +37,43 @@ function getMessage(url: URL): Message | undefined {
   return message;
 }
 
-function send(url: string) {
-  const message = getMessage(new URL(url));
-  if (!message) {
-    return;
-  }
-  console.log(message);
+function sendToNative(message: Message) {
+  console.log(`sending message to local: ${message}`);
   chrome.runtime.sendNativeMessage("jp.rail44.octolo", message, r =>
-    console.log(r)
+    console.log(`received message from local: ${r}`)
   );
 }
 
 chrome.contextMenus.create({
   id: "remote-open-link",
-  title: "Open with external editor",
+  title: MENU_TITLE,
   contexts: ["link"],
-  targetUrlPatterns: ["*://github.com/*/blob*"],
+  targetUrlPatterns: [GITHUB_URL_PATTERN],
   onclick: ({ linkUrl }) => {
-    send(linkUrl!);
+    if (!linkUrl) {
+      return;
+    }
+
+    const message = getMessage(new URL(linkUrl));
+    if (!message) {
+      return;
+    }
+
+    sendToNative(message);
   }
 });
 
 chrome.contextMenus.create({
   id: "remote-open-page",
-  title: "Open with external editor",
+  title: MENU_TITLE,
   contexts: ["page"],
-  documentUrlPatterns: ["*://github.com/*/blob*"],
+  documentUrlPatterns: [GITHUB_URL_PATTERN],
   onclick: ({ pageUrl }) => {
-    send(pageUrl!);
+    const message = getMessage(new URL(pageUrl));
+    if (!message) {
+      return;
+    }
+
+    sendToNative(message);
   }
 });
