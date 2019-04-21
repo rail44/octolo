@@ -76,7 +76,7 @@ impl Manifest {
                 path,
                 _type: "stdio".to_string(),
                 allowed_origins: vec![
-                    "chrome-extension://ljamldknpblpphdmmoekahhhhnmlnhje/".to_string()
+                    "chrome-extension://bjobchligfnjcanofeicpaagjlibkffi/".to_string()
                 ],
             },
         })

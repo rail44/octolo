@@ -29,18 +29,31 @@ fn main() {
         .subcommand(
             SubCommand::with_name("manifest")
                 .unset_setting(AppSettings::AllowExternalSubcommands)
-                .about("Generate and place native manifest")
+                .about("Generate native messaging manifest for configured browser")
                 .arg(
                     Arg::with_name("write")
                         .short("w")
                         .help("Write manifest insted of show"),
                 ),
         )
+        .subcommand(
+            SubCommand::with_name("config")
+                .setting(AppSettings::SubcommandRequired)
+                .unset_setting(AppSettings::AllowExternalSubcommands)
+                    .subcommand(SubCommand::with_name("dump")
+                        .about("Dump full config with optional fields"))
+        )
         .get_matches();
     if let Some(c) = matches.subcommand_matches("manifest") {
         let write = c.is_present("write");
         manifest(config.browser, write).unwrap();
         return;
+    }
+    if let Some(c) = matches.subcommand_matches("config") {
+        if let Some(_) = c.subcommand_matches("dump") {
+            println!("{}", &toml::to_string(&config).unwrap());
+            return;
+        }
     }
     receive(config).unwrap();
 }
