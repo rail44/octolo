@@ -1,5 +1,3 @@
-#![feature(custom_attribute)]
-
 mod browser;
 mod config;
 mod receive;
