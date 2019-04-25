@@ -1,5 +1,8 @@
-const MENU_TITLE = "Open with local editor";
 const GITHUB_URL_PATTERN = "*://github.com/*/blob*";
+
+function getMenuTitle(editorName: string) {
+  return `Open with local editor ${editorName}`;
+}
 
 type Message = Open | GetConfig;
 
@@ -9,6 +12,7 @@ interface Open {
   repository: string;
   revision: string;
   path: string;
+  editor: string;
   line?: number;
 }
 
@@ -16,7 +20,21 @@ interface GetConfig {
   type: "GetConfig";
 }
 
-function getMessage(url: URL): Message | undefined {
+interface Config {
+  browser_list: string[],
+    root: string,
+    path: string,
+    editors: Editor[],
+}
+
+type ResponseMessage = Config;
+
+interface Editor {
+  kind: string,
+    name?: string,
+}
+
+function getMessage(url: URL, editor: string): Open | undefined {
   const paths = url.pathname.split("/").filter(p => p !== "");
   if (paths.length === 0) {
     return;
@@ -30,11 +48,13 @@ function getMessage(url: URL): Message | undefined {
   const revision = paths.shift()!;
   const path = paths.join("/");
 
-  const message: Message = {
+  const message: Open = {
+    type: "Open",
     user,
     repository,
     revision,
-    path
+    path,
+    editor
   };
 
   const line = Number(url.hash.substring(2));
@@ -44,43 +64,47 @@ function getMessage(url: URL): Message | undefined {
   return message;
 }
 
-function sendToNative(message: Message) {
+function sendToNative(message: Message, cb: (res: ResponseMessage) => void) {
   console.log(`sending message to local: ${message}`);
-  chrome.runtime.sendNativeMessage("jp.rail44.octolo", message, r =>
-    console.log(`received message from local: ${r}`)
-  );
+  chrome.runtime.sendNativeMessage("jp.rail44.octolo", message, cb);
 }
 
-chrome.contextMenus.create({
-  id: "remote-open-link",
-  title: MENU_TITLE,
-  contexts: ["link"],
-  targetUrlPatterns: [GITHUB_URL_PATTERN],
-  onclick: ({ linkUrl }) => {
-    if (!linkUrl) {
-      return;
-    }
+sendToNative({type: "GetConfig"}, (res) => {
+  console.log(res);
+  for (const editor of res.editor) {
+    let editorId = editor.name || editor.kind;
+    chrome.contextMenus.create({
+      id: `remote-open-link-${editorId}`,
+      title: getMenuTitle(editorId),
+      contexts: ["link"],
+      targetUrlPatterns: [GITHUB_URL_PATTERN],
+      onclick: ({ linkUrl }) => {
+        if (!linkUrl) {
+          return;
+        }
 
-    const message = getMessage(new URL(linkUrl));
-    if (!message) {
-      return;
-    }
+        const message = getMessage(new URL(linkUrl), editorId);
+        if (!message) {
+          return;
+        }
 
-    sendToNative(message);
-  }
-});
+        sendToNative(message, (res) => console.log(res));
+      }
+    });
 
-chrome.contextMenus.create({
-  id: "remote-open-page",
-  title: MENU_TITLE,
-  contexts: ["page"],
-  documentUrlPatterns: [GITHUB_URL_PATTERN],
-  onclick: ({ pageUrl }) => {
-    const message = getMessage(new URL(pageUrl));
-    if (!message) {
-      return;
-    }
+    chrome.contextMenus.create({
+      id: `remote-open-page-${editorId}`,
+      title: getMenuTitle(editorId),
+      contexts: ["page"],
+      documentUrlPatterns: [GITHUB_URL_PATTERN],
+      onclick: ({ pageUrl }) => {
+        const message = getMessage(new URL(pageUrl), editorId);
+        if (!message) {
+          return;
+        }
 
-    sendToNative(message);
+        sendToNative(message, (res) => console.log(res));
+      }
+    });
   }
 });

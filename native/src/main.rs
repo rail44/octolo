@@ -14,6 +14,8 @@ pub enum Error {
     CouldNotGetGhqRoot,
     #[fail(display = "Could not determine home dir")]
     CouldNotDetermineHomeDir,
+    #[fail(display = "Could not find editor by requested id")]
+    NotFoundEditor,
 }
 
 fn main() {

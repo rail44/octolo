@@ -5,7 +5,7 @@
   "author": "Satoshi Amemiya <amemiya@protonmail.com>",
   "license": "Unlicense",
   "scripts": {
-    "build": "rm -rf pkg/dist && webpack --mode production && web-ext build -s pkg"
+    "build": "rm -rf pkg/dist && webpack --mode production && web-ext build --overwrite-dest -s pkg"
   },
   "devDependencies": {
     "@babel/core": "^7.4.3",

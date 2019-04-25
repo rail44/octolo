@@ -1,5 +1,5 @@
 use crate::browser::Browser;
-use crate::receive::Input;
+use crate::receive::OpenMessage;
 use dirs::home_dir;
 use handlebars::Handlebars;
 use serde::{Deserialize, Serialize};
@@ -17,7 +17,7 @@ pub struct Config {
     pub root: String,
     #[serde(default = "get_default_path")]
     pub path: String,
-    pub editor: Vec<Editor>,
+    pub editors: Vec<Editor>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -38,40 +38,70 @@ pub enum Editor {
         args: Vec<String>,
     },
     Other {
-        name: Option<String>,
+        name: String,
         cmd: Vec<String>,
     },
 }
 
+impl Editor {
+    fn get_name<'a>(&'a self) -> Option<&'a String> {
+        match self {
+            Editor::VisualStudioCode { name, .. } => name.as_ref(),
+            Editor::NeovimRemote { name, ..  } => name.as_ref(),
+            Editor::Other { name, .. } => Some(name),
+        }
+    }
+
+    fn get_tag(&self) -> String {
+        match self {
+            Editor::VisualStudioCode { .. } => "visual-studio-code".to_string(),
+            Editor::NeovimRemote { .. } => "neovim-remote".to_string(),
+            Editor::Other { name, .. } => name.clone(),
+        }
+    }
+    
+    pub fn get_id(&self) -> String {
+        if let Some(name) = self.get_name() {
+            return name.clone();
+        }
+        self.get_tag()
+    }
+}
+
 impl Config {
-    pub fn get_command(&self, input: &Input) -> Result<Command, failure::Error> {
-        match &self.editor {
-            Editor::VisualStudioCode { name, bin, args } => {
-                self.get_command_from_bin_and_args(bin, args, input)
+    pub fn get_command(&self, message: &OpenMessage) -> Result<Command, failure::Error> {
+        let editor = self.choose_editor(&message.editor)?;
+        match editor {
+            Editor::VisualStudioCode { bin, args, .. } => {
+                self.get_command_from_bin_and_args(bin, args, message)
             }
-            Editor::NeovimRemote { name, bin, args } => {
-                self.get_command_from_bin_and_args(bin, args, input)
+            Editor::NeovimRemote { bin, args, .. } => {
+                self.get_command_from_bin_and_args(bin, args, message)
             }
-            Editor::Other { name, cmd } => {
+            Editor::Other { cmd, .. } => {
                 let (bin, args) = cmd.split_at(0);
                 let bin = bin.first().unwrap();
-                self.get_command_from_bin_and_args(bin, args, input)
+                self.get_command_from_bin_and_args(bin, args, message)
             }
         }
+    }
+
+    fn choose_editor<'a>(&'a self, requested: &str) -> Result<&'a Editor, failure::Error> {
+        Ok(self.editor.iter().find(|e| e.get_id() == requested).ok_or(crate::Error::NotFoundEditor)?)
     }
 
     fn get_command_from_bin_and_args(
         &self,
         bin: &str,
         args: &[String],
-        input: &Input,
+        message: &OpenMessage,
     ) -> Result<Command, failure::Error> {
         let h = Handlebars::new();
         let mut c = Command::new(bin);
-        c.current_dir(Path::new(&self.root).join(&h.render_template(&self.path, &input)?));
+        c.current_dir(Path::new(&self.root).join(&h.render_template(&self.path, &message)?));
         c.args(
             args.iter()
-                .map(|a| h.render_template(a, &input))
+                .map(|a| h.render_template(a, &message))
                 .collect::<Result<Vec<_>, _>>()?,
         );
         Ok(c)
