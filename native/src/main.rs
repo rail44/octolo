@@ -14,8 +14,6 @@ pub enum Error {
     CouldNotGetGhqRoot,
     #[fail(display = "Could not determine home dir")]
     CouldNotDetermineHomeDir,
-    #[fail(display = "Could not determine config dir")]
-    CouldNotDetermineConfigDir,
 }
 
 fn main() {

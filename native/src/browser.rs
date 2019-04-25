@@ -7,7 +7,7 @@ use std::io::{stdout, BufWriter};
 
 #[derive(Deserialize, Serialize)]
 pub enum Browser {
-    FireFox,
+    Firefox,
     Chrome,
     Chromium,
 }
@@ -15,7 +15,7 @@ pub enum Browser {
 impl fmt::Display for Browser {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            &Browser::FireFox => write!(f, "FireFox"),
+            &Browser::Firefox => write!(f, "Firefox"),
             &Browser::Chrome => write!(f, "Chrome"),
             &Browser::Chromium => write!(f, "Chromium"),
         }
@@ -26,7 +26,7 @@ impl Browser {
     #[cfg(target_os = "macos")]
     pub fn get_manifest_dir(&self) -> String {
         match self {
-            Browser::FireFox => {
+            Browser::Firefox => {
                 "Library/Application Support/Mozilla/NativeMessagingHosts".to_string()
             }
             Browser::Chrome => {
@@ -41,7 +41,7 @@ impl Browser {
     #[cfg(target_os = "linux")]
     pub fn get_manifest_dir(&self) -> String {
         match self {
-            Browser::FireFox => ".mozilla/native-messaging-hosts".to_string(),
+            Browser::Firefox => ".mozilla/native-messaging-hosts".to_string(),
             Browser::Chrome => ".config/google-chrome/NativeMessagingHosts".to_string(),
             Browser::Chromium => ".config/chromium/NativeMessagingHosts".to_string(),
         }
@@ -51,7 +51,7 @@ impl Browser {
 #[derive(Serialize)]
 #[serde(untagged)]
 enum Manifest {
-    FireFox {
+    Firefox {
         name: String,
         description: String,
         path: String,
@@ -74,7 +74,7 @@ impl Manifest {
     pub fn new(browser: &Browser) -> Result<Self, failure::Error> {
         let path = current_exe()?.to_str().unwrap().to_string();
         Ok(match browser {
-            &Browser::FireFox => Manifest::FireFox {
+            &Browser::Firefox => Manifest::Firefox {
                 name: "jp.rail44.octolo".to_string(),
                 description: "Open files with local editor from GitHub web".to_string(),
                 path,

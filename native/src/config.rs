@@ -1,6 +1,6 @@
 use crate::browser::Browser;
 use crate::receive::Input;
-use dirs::config_dir;
+use dirs::home_dir;
 use handlebars::Handlebars;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
@@ -8,7 +8,7 @@ use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-static FILE_PATH: &str = "octolo/octolo.toml";
+static FILE_PATH: &str = ".config/octolo/octolo.toml";
 
 #[derive(Deserialize, Serialize)]
 pub struct Config {
@@ -88,8 +88,8 @@ fn neovim_remote_args() -> Vec<String> {
 }
 
 fn get_file_path() -> Result<PathBuf, failure::Error> {
-    Ok(config_dir()
-        .ok_or(crate::Error::CouldNotDetermineConfigDir)?
+    Ok(home_dir()
+        .ok_or(crate::Error::CouldNotDetermineHomeDir)?
         .join(FILE_PATH))
 }
 
