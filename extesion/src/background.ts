@@ -1,12 +1,19 @@
 const MENU_TITLE = "Open with local editor";
 const GITHUB_URL_PATTERN = "*://github.com/*/blob*";
 
-interface Message {
+type Message = Open | GetConfig;
+
+interface Open {
+  type: "Open";
   user: string;
   repository: string;
   revision: string;
   path: string;
   line?: number;
+}
+
+interface GetConfig {
+  type: "GetConfig";
 }
 
 function getMessage(url: URL): Message | undefined {

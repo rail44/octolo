@@ -4,13 +4,17 @@ use serde::{Deserialize, Serialize};
 use std::io::{self, Read, Write};
 use std::panic;
 
-#[derive(Deserialize, Serialize, Debug)]
-pub struct Input {
-    user: String,
-    repository: String,
-    revision: String,
-    path: String,
-    line: Option<i32>,
+#[derive(Deserialize, Serialize)]
+#[serde(tag = "type")]
+pub enum Input {
+    Open {
+        user: String,
+        repository: String,
+        revision: String,
+        path: String,
+        line: Option<i32>,
+    },
+    GetConfig,
 }
 
 #[derive(Serialize)]

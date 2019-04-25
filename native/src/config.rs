@@ -17,7 +17,7 @@ pub struct Config {
     pub root: String,
     #[serde(default = "get_default_path")]
     pub path: String,
-    pub editor: Editor,
+    pub editor: Vec<Editor>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -25,17 +25,20 @@ pub struct Config {
 pub enum Editor {
     #[serde(rename = "visual-studio-code")]
     VisualStudioCode {
+        name: Option<String>,
         bin: String,
         #[serde(default = "visual_studio_code_args")]
         args: Vec<String>,
     },
     #[serde(rename = "neovim-remote")]
     NeovimRemote {
+        name: Option<String>,
         bin: String,
         #[serde(default = "neovim_remote_args")]
         args: Vec<String>,
     },
     Other {
+        name: Option<String>,
         cmd: Vec<String>,
     },
 }
@@ -43,13 +46,13 @@ pub enum Editor {
 impl Config {
     pub fn get_command(&self, input: &Input) -> Result<Command, failure::Error> {
         match &self.editor {
-            Editor::VisualStudioCode { bin, args } => {
+            Editor::VisualStudioCode { name, bin, args } => {
                 self.get_command_from_bin_and_args(bin, args, input)
             }
-            Editor::NeovimRemote { bin, args } => {
+            Editor::NeovimRemote { name, bin, args } => {
                 self.get_command_from_bin_and_args(bin, args, input)
             }
-            Editor::Other { cmd } => {
+            Editor::Other { name, cmd } => {
                 let (bin, args) = cmd.split_at(0);
                 let bin = bin.first().unwrap();
                 self.get_command_from_bin_and_args(bin, args, input)
