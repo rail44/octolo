@@ -1,7 +1,7 @@
 const GITHUB_URL_PATTERN = "*://github.com/*/blob*";
 
 function getMenuTitle(editorName: string) {
-  return `Open with local editor ${editorName}`;
+  return `Open with ${editorName}`;
 }
 
 type Message = Open | GetConfig;
@@ -21,17 +21,14 @@ interface GetConfig {
 }
 
 interface Config {
-  browser_list: string[],
-    root: string,
-    path: string,
-    editors: Editor[],
+  editor_list: Editor[],
 }
 
 type ResponseMessage = Config;
 
 interface Editor {
   kind: string,
-    name?: string,
+  label: string,
 }
 
 function getMessage(url: URL, editor: string): Open | undefined {
@@ -65,17 +62,16 @@ function getMessage(url: URL, editor: string): Open | undefined {
 }
 
 function sendToNative(message: Message, cb: (res: ResponseMessage) => void) {
-  console.log(`sending message to local: ${message}`);
+  console.log(`sending message to local: ${JSON.stringify(message)}`);
   chrome.runtime.sendNativeMessage("jp.rail44.octolo", message, cb);
 }
 
 sendToNative({type: "GetConfig"}, (res) => {
   console.log(res);
-  for (const editor of res.editor) {
-    let editorId = editor.name || editor.kind;
+  for (const editor of res.editor_list) {
     chrome.contextMenus.create({
-      id: `remote-open-link-${editorId}`,
-      title: getMenuTitle(editorId),
+      id: `remote-open-link-${editor.kind}`,
+      title: getMenuTitle(editor.label),
       contexts: ["link"],
       targetUrlPatterns: [GITHUB_URL_PATTERN],
       onclick: ({ linkUrl }) => {
@@ -83,7 +79,7 @@ sendToNative({type: "GetConfig"}, (res) => {
           return;
         }
 
-        const message = getMessage(new URL(linkUrl), editorId);
+        const message = getMessage(new URL(linkUrl), editor.kind);
         if (!message) {
           return;
         }
@@ -93,12 +89,12 @@ sendToNative({type: "GetConfig"}, (res) => {
     });
 
     chrome.contextMenus.create({
-      id: `remote-open-page-${editorId}`,
-      title: getMenuTitle(editorId),
+      id: `remote-open-page-${editor.kind}`,
+      title: getMenuTitle(editor.label),
       contexts: ["page"],
       documentUrlPatterns: [GITHUB_URL_PATTERN],
       onclick: ({ pageUrl }) => {
-        const message = getMessage(new URL(pageUrl), editorId);
+        const message = getMessage(new URL(pageUrl), editor.kind);
         if (!message) {
           return;
         }

@@ -25,14 +25,12 @@ pub struct Config {
 pub enum Editor {
     #[serde(rename = "visual-studio-code")]
     VisualStudioCode {
-        name: Option<String>,
         bin: String,
         #[serde(default = "visual_studio_code_args")]
         args: Vec<String>,
     },
     #[serde(rename = "neovim-remote")]
     NeovimRemote {
-        name: Option<String>,
         bin: String,
         #[serde(default = "neovim_remote_args")]
         args: Vec<String>,
@@ -44,27 +42,20 @@ pub enum Editor {
 }
 
 impl Editor {
-    fn get_name<'a>(&'a self) -> Option<&'a String> {
+    pub fn get_label(&self) -> String {
         match self {
-            Editor::VisualStudioCode { name, .. } => name.as_ref(),
-            Editor::NeovimRemote { name, ..  } => name.as_ref(),
-            Editor::Other { name, .. } => Some(name),
+            Editor::VisualStudioCode { .. } => "Visual Studio Code".to_string(),
+            Editor::NeovimRemote { .. } => "Neovim Remote".to_string(),
+            Editor::Other { name, .. } => name.clone(),
         }
     }
 
-    fn get_tag(&self) -> String {
+    pub fn get_kind(&self) -> String {
         match self {
             Editor::VisualStudioCode { .. } => "visual-studio-code".to_string(),
             Editor::NeovimRemote { .. } => "neovim-remote".to_string(),
             Editor::Other { name, .. } => name.clone(),
         }
-    }
-    
-    pub fn get_id(&self) -> String {
-        if let Some(name) = self.get_name() {
-            return name.clone();
-        }
-        self.get_tag()
     }
 }
 
@@ -87,7 +78,7 @@ impl Config {
     }
 
     fn choose_editor<'a>(&'a self, requested: &str) -> Result<&'a Editor, failure::Error> {
-        Ok(self.editor.iter().find(|e| e.get_id() == requested).ok_or(crate::Error::NotFoundEditor)?)
+        Ok(self.editors.iter().find(|e| e.get_kind() == requested).ok_or(crate::Error::NotFoundEditor)?)
     }
 
     fn get_command_from_bin_and_args(

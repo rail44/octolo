@@ -32,6 +32,28 @@ struct ErrorOutput {
     error: String,
 }
 
+#[derive(Serialize)]
+struct ConfigOutput {
+    editor_list: Vec<EditorOutput>,
+}
+
+#[derive(Serialize)]
+struct EditorOutput {
+    kind: String,
+    label: String,
+}
+
+impl From<Config> for ConfigOutput {
+    fn from(c: Config) -> Self {
+        ConfigOutput{
+            editor_list: c.editors.iter().map(|e| EditorOutput {
+                kind: e.get_kind(),
+                label: e.get_label(),
+            }).collect(),
+        }
+    }
+}
+
 fn read_input<R: Read>(mut message: R) -> io::Result<Message> {
     match message.read_u32::<NativeEndian>() {
         Ok(length) => {
@@ -73,7 +95,8 @@ pub fn receive(config: Config) -> Result<(), failure::Error> {
             Ok(write_output(io::stdout(), &output)?)
         },
         Message::GetConfig => {
-            Ok(write_output(io::stdout(), &config)?)
+            let output = ConfigOutput::from(config);
+            Ok(write_output(io::stdout(), &output)?)
         }
     }
 }
