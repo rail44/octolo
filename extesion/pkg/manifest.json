@@ -2,7 +2,7 @@
   "description": "Open files with local editor from GitHub Web",
   "manifest_version": 2,
   "name": "octolo",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "applications": {
     "gecko": {
       "id": "{3de89a2b-180a-427e-85dd-29c983e93ba3}",
