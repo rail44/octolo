@@ -16,6 +16,7 @@ matrix:
         - rustup target add x86_64-unknown-linux-musl
       script:
         - cargo build --release --target x86_64-unknown-linux-musl
+      before_deploy:
         - cp ./target/x86_64-unknown-linux-musl/release/octolo octolo-x86_64-unknown-linux-musl
       deploy:
         provider: releases
@@ -31,6 +32,7 @@ matrix:
         - cd native
       script:
         - cargo build --release
+      before_deploy:
         - cp ./target/release/octolo octolo-x86_64-apple-darwin
       deploy:
         provider: releases

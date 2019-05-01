@@ -17,8 +17,13 @@ pub struct OpenMessage {
     pub repository: String,
     pub revision: String,
     pub path: String,
-    pub line: Option<i32>,
+    #[serde(default = "get_default_line")]
+    pub line: i32,
     pub editor: String,
+}
+
+fn get_default_line() -> i32 {
+    0
 }
 
 #[derive(Serialize)]

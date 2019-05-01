@@ -35,6 +35,13 @@ pub enum Editor {
         #[serde(default = "neovim_remote_args")]
         args: Vec<String>,
     },
+    #[serde(rename = "jetbrains-ide")]
+    JetBrainsIde {
+        name: String,
+        bin: String,
+        #[serde(default = "jetbrains_ide_args")]
+        args: Vec<String>,
+    },
     Other {
         name: String,
         cmd: Vec<String>,
@@ -46,6 +53,7 @@ impl Editor {
         match self {
             Editor::VisualStudioCode { .. } => "Visual Studio Code".to_string(),
             Editor::NeovimRemote { .. } => "Neovim Remote".to_string(),
+            Editor::JetBrainsIde { name, .. } => name.clone(),
             Editor::Other { name, .. } => name.clone(),
         }
     }
@@ -54,6 +62,7 @@ impl Editor {
         match self {
             Editor::VisualStudioCode { .. } => "visual-studio-code".to_string(),
             Editor::NeovimRemote { .. } => "neovim-remote".to_string(),
+            Editor::JetBrainsIde { .. } => "jetbrains-ide".to_string(),
             Editor::Other { name, .. } => name.clone(),
         }
     }
@@ -67,6 +76,9 @@ impl Config {
                 self.get_command_from_bin_and_args(bin, args, message)
             }
             Editor::NeovimRemote { bin, args, .. } => {
+                self.get_command_from_bin_and_args(bin, args, message)
+            }
+            Editor::JetBrainsIde { bin, args, .. } => {
                 self.get_command_from_bin_and_args(bin, args, message)
             }
             Editor::Other { cmd, .. } => {
@@ -109,6 +121,10 @@ fn neovim_remote_args() -> Vec<String> {
         "-p".to_string(),
         "{{path}}".to_string(),
     ]
+}
+
+fn jetbrains_ide_args() -> Vec<String> {
+    vec!["{{path}}:{{line}}".to_string()]
 }
 
 fn get_file_path() -> Result<PathBuf, failure::Error> {
