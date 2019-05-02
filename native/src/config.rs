@@ -1,8 +1,11 @@
 use crate::browser::Browser;
+use crate::neovim;
 use crate::receive::OpenMessage;
 use dirs::home_dir;
 use handlebars::Handlebars;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
+use std::env;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
@@ -29,11 +32,10 @@ pub enum Editor {
         #[serde(default = "visual_studio_code_args")]
         args: Vec<String>,
     },
-    #[serde(rename = "neovim-remote")]
-    NeovimRemote {
-        bin: String,
-        #[serde(default = "neovim_remote_args")]
-        args: Vec<String>,
+    #[serde(rename = "neovim")]
+    Neovim {
+        #[serde(default = "neovim_default_address")]
+        address: Option<String>,
     },
     #[serde(rename = "jetbrains-ide")]
     JetBrainsIde {
@@ -52,7 +54,7 @@ impl Editor {
     pub fn get_label(&self) -> String {
         match self {
             Editor::VisualStudioCode { .. } => "Visual Studio Code".to_string(),
-            Editor::NeovimRemote { .. } => "Neovim Remote".to_string(),
+            Editor::Neovim { .. } => "Neovim".to_string(),
             Editor::JetBrainsIde { name, .. } => name.clone(),
             Editor::Other { name, .. } => name.clone(),
         }
@@ -61,7 +63,7 @@ impl Editor {
     pub fn get_kind(&self) -> String {
         match self {
             Editor::VisualStudioCode { .. } => "visual-studio-code".to_string(),
-            Editor::NeovimRemote { .. } => "neovim-remote".to_string(),
+            Editor::Neovim { .. } => "neovim".to_string(),
             Editor::JetBrainsIde { .. } => "jetbrains-ide".to_string(),
             Editor::Other { name, .. } => name.clone(),
         }
@@ -69,58 +71,62 @@ impl Editor {
 }
 
 impl Config {
-    pub fn get_command(&self, message: &OpenMessage) -> Result<Command, failure::Error> {
+    pub fn open(&self, message: &OpenMessage) -> Result<serde_json::Value, failure::Error> {
         let editor = self.choose_editor(&message.editor)?;
-        match editor {
+        let h = Handlebars::new();
+        let work_dir = Path::new(&self.root).join(&h.render_template(&self.path, &message)?);
+        let command = match editor {
             Editor::VisualStudioCode { bin, args, .. } => {
-                self.get_command_from_bin_and_args(bin, args, message)
+                get_command_from_bin_and_args(&work_dir, bin, args, message)
             }
-            Editor::NeovimRemote { bin, args, .. } => {
-                self.get_command_from_bin_and_args(bin, args, message)
+            Editor::Neovim { address, .. } => {
+                return Ok(neovim::open(address.as_ref().unwrap(), &work_dir, message)?);
             }
             Editor::JetBrainsIde { bin, args, .. } => {
-                self.get_command_from_bin_and_args(bin, args, message)
+                get_command_from_bin_and_args(&work_dir, bin, args, message)
             }
             Editor::Other { cmd, .. } => {
                 let (bin, args) = cmd.split_at(0);
                 let bin = bin.first().unwrap();
-                self.get_command_from_bin_and_args(bin, args, message)
+                get_command_from_bin_and_args(&work_dir, bin, args, message)
             }
-        }
+        };
+
+        let command_output = command?.output()?;
+        Ok(json!({
+            "stdout": String::from_utf8(command_output.stdout)?,
+            "stderr": String::from_utf8(command_output.stderr)?,
+        }))
     }
 
     fn choose_editor<'a>(&'a self, requested: &str) -> Result<&'a Editor, failure::Error> {
-        Ok(self.editors.iter().find(|e| e.get_kind() == requested).ok_or(crate::Error::NotFoundEditor)?)
+        Ok(self
+            .editors
+            .iter()
+            .find(|e| e.get_kind() == requested)
+            .ok_or(crate::Error::NotFoundEditor)?)
     }
+}
 
-    fn get_command_from_bin_and_args(
-        &self,
-        bin: &str,
-        args: &[String],
-        message: &OpenMessage,
-    ) -> Result<Command, failure::Error> {
-        let h = Handlebars::new();
-        let mut c = Command::new(bin);
-        c.current_dir(Path::new(&self.root).join(&h.render_template(&self.path, &message)?));
-        c.args(
-            args.iter()
-                .map(|a| h.render_template(a, &message))
-                .collect::<Result<Vec<_>, _>>()?,
-        );
-        Ok(c)
-    }
+fn get_command_from_bin_and_args(
+    work_dir: &PathBuf,
+    bin: &str,
+    args: &[String],
+    message: &OpenMessage,
+) -> Result<Command, failure::Error> {
+    let mut c = Command::new(bin);
+    let h = Handlebars::new();
+    c.current_dir(work_dir);
+    c.args(
+        args.iter()
+            .map(|a| h.render_template(a, &message))
+            .collect::<Result<Vec<_>, _>>()?,
+    );
+    Ok(c)
 }
 
 fn visual_studio_code_args() -> Vec<String> {
     vec!["-g".to_string(), "{{path}}:{{line}}".to_string()]
-}
-
-fn neovim_remote_args() -> Vec<String> {
-    vec![
-        "--nostart".to_string(),
-        "-p".to_string(),
-        "{{path}}".to_string(),
-    ]
 }
 
 fn jetbrains_ide_args() -> Vec<String> {
@@ -151,6 +157,10 @@ fn get_ghq_root() -> Result<String, failure::Error> {
         return Err(crate::Error::CouldNotGetGhqRoot.into());
     }
     Ok(s)
+}
+
+fn neovim_default_address() -> Option<String> {
+    env::var("NVIM_LISTEN_ADDRESS").ok()
 }
 
 fn get_default_path() -> String {

@@ -6,9 +6,9 @@ use std::panic;
 
 #[derive(Deserialize, Serialize)]
 #[serde(tag = "type")]
-enum Message{
+enum Message {
     Open(OpenMessage),
-    GetConfig
+    GetConfig,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -24,12 +24,6 @@ pub struct OpenMessage {
 
 fn get_default_line() -> i32 {
     0
-}
-
-#[derive(Serialize)]
-struct Output {
-    stdout: String,
-    stderr: String,
 }
 
 #[derive(Serialize)]
@@ -50,11 +44,15 @@ struct EditorOutput {
 
 impl From<Config> for ConfigOutput {
     fn from(c: Config) -> Self {
-        ConfigOutput{
-            editor_list: c.editors.iter().map(|e| EditorOutput {
-                kind: e.get_kind(),
-                label: e.get_label(),
-            }).collect(),
+        ConfigOutput {
+            editor_list: c
+                .editors
+                .iter()
+                .map(|e| EditorOutput {
+                    kind: e.get_kind(),
+                    label: e.get_label(),
+                })
+                .collect(),
         }
     }
 }
@@ -92,13 +90,9 @@ pub fn receive(config: Config) -> Result<(), failure::Error> {
     }));
     match read_input(io::stdin())? {
         Message::Open(message) => {
-            let command_output = config.get_command(&message)?.output()?;
-            let output = Output {
-                stdout: String::from_utf8(command_output.stdout)?,
-                stderr: String::from_utf8(command_output.stderr)?,
-            };
+            let output = config.open(&message)?;
             Ok(write_output(io::stdout(), &output)?)
-        },
+        }
         Message::GetConfig => {
             let output = ConfigOutput::from(config);
             Ok(write_output(io::stdout(), &output)?)

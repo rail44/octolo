@@ -1,5 +1,6 @@
 mod browser;
 mod config;
+mod neovim;
 mod receive;
 
 use browser::manifest;
@@ -49,7 +50,7 @@ fn main() {
         return;
     }
     if let Some(c) = matches.subcommand_matches("config") {
-        if let Some(_) = c.subcommand_matches("dump") {
+        if c.subcommand_matches("dump").is_some() {
             println!("{}", &toml::to_string(&config).unwrap());
             return;
         }

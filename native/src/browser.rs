@@ -15,9 +15,9 @@ pub enum Browser {
 impl fmt::Display for Browser {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            &Browser::Firefox => write!(f, "Firefox"),
-            &Browser::Chrome => write!(f, "Chrome"),
-            &Browser::Chromium => write!(f, "Chromium"),
+            Browser::Firefox => write!(f, "Firefox"),
+            Browser::Chrome => write!(f, "Chrome"),
+            Browser::Chromium => write!(f, "Chromium"),
         }
     }
 }
@@ -74,14 +74,14 @@ impl Manifest {
     pub fn new(browser: &Browser) -> Result<Self, failure::Error> {
         let path = current_exe()?.to_str().unwrap().to_string();
         Ok(match browser {
-            &Browser::Firefox => Manifest::Firefox {
+            Browser::Firefox => Manifest::Firefox {
                 name: "jp.rail44.octolo".to_string(),
                 description: "Open files with local editor from GitHub web".to_string(),
                 path,
                 _type: "stdio".to_string(),
                 allowed_extensions: vec!["{3de89a2b-180a-427e-85dd-29c983e93ba3}".to_string()],
             },
-            &Browser::Chrome | Browser::Chromium => Manifest::Chrome {
+            Browser::Chrome | Browser::Chromium => Manifest::Chrome {
                 name: "jp.rail44.octolo".to_string(),
                 description: "Open files with local editor from GitHub web".to_string(),
                 path,
@@ -118,8 +118,8 @@ pub fn manifest(browser_list: Vec<Browser>, write: bool) -> Result<(), failure::
         }
         println!("// manifest for {}", browser);
         serde_json::to_writer_pretty(stdout(), &manifest)?;
-        println!("");
-        println!("");
+        println!();
+        println!();
     }
     Ok(())
 }
