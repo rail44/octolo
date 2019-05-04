@@ -17,6 +17,8 @@ Octo To Local, Open files with local editor from GitHub web.
 * Visual Studio Code
 * JetBrains IDEs
 
+And, you can execute any command with editor kind `cmd` .
+
 ### Browsers
 
 * Firefox
@@ -88,6 +90,16 @@ bin = "/usr/local/bin/code" # Path of $(which code)
 kind = "jetbrains-ide"
 name = "IntelliJ IDEA" # or "PHPStorm", "RubyMine" ... 
 bin = "/usr/local/bin/idea" # Path of $(which idea)
+
+# Or, you can execute any commands.
+# cmd should be defined with handlebars syntax.
+[[editors]]
+kind = "cmd"
+cmd = [
+    "your-favorite-cli",
+    "-f {{path}}",
+    "-l {{line}}"
+]
 ```
 
 **Once creating configuration, run bellow**

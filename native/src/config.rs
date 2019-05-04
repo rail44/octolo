@@ -44,7 +44,7 @@ pub enum Editor {
         #[serde(default = "jetbrains_ide_args")]
         args: Vec<String>,
     },
-    Other {
+    Cmd {
         name: String,
         cmd: Vec<String>,
     },
@@ -56,7 +56,7 @@ impl Editor {
             Editor::VisualStudioCode { .. } => "Visual Studio Code".to_string(),
             Editor::Neovim { .. } => "Neovim".to_string(),
             Editor::JetBrainsIde { name, .. } => name.clone(),
-            Editor::Other { name, .. } => name.clone(),
+            Editor::Cmd { name, .. } => name.clone(),
         }
     }
 
@@ -65,7 +65,7 @@ impl Editor {
             Editor::VisualStudioCode { .. } => "visual-studio-code".to_string(),
             Editor::Neovim { .. } => "neovim".to_string(),
             Editor::JetBrainsIde { .. } => "jetbrains-ide".to_string(),
-            Editor::Other { name, .. } => name.clone(),
+            Editor::Cmd { name, .. } => name.clone(),
         }
     }
 }
@@ -85,7 +85,7 @@ impl Config {
             Editor::JetBrainsIde { bin, args, .. } => {
                 get_command_from_bin_and_args(&work_dir, bin, args, message)
             }
-            Editor::Other { cmd, .. } => {
+            Editor::Cmd { cmd, .. } => {
                 let (bin, args) = cmd.split_at(0);
                 let bin = bin.first().unwrap();
                 get_command_from_bin_and_args(&work_dir, bin, args, message)
