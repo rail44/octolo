@@ -13,7 +13,7 @@ Octo To Local, Open files with local editor from GitHub web.
 
 ### Editors
 
-* Neovim via [neovim-remote](https://github.com/mhinz/neovim-remote)
+* Neovim
 * Visual Studio Code
 * JetBrains IDEs
 
@@ -69,23 +69,25 @@ browser_list = [
     # "Chrome"
 ]
 
-# If you are using ghq, this property can be omitted
-root = "/home/john/src"
+# If you have configuration ghq.root, Octolo will use it as default
+# root = "/home/john/src"
 
-# Keep configurations for editor your using
+# path = github.com/{{user}}/{{repository}}
+
+# Use configurations for editor your using
+[[editors]]
+kind = "neovim"
+# The address that nvim listening. By default, Octolo uses $NVIM_LISTEN_ADDRESS 
+# address = "" 
 
 [[editors]]
 kind = "visual-studio-code"
-bin = "/usr/local/bin/code" # $(which code)
-
-[[editors]]
-kind = "neovim-remote"
-bin = "/usr/local/bin/nvr" # $(which nvr) 
+bin = "/usr/local/bin/code" # Path of $(which code)
 
 [[editors]]
 kind = "jetbrains-ide"
 name = "IntelliJ IDEA" # or "PHPStorm", "RubyMine" ... 
-bin = "/usr/local/bin/idea" # $(which idea)
+bin = "/usr/local/bin/idea" # Path of $(which idea)
 ```
 
 **Once creating configuration, run bellow**
