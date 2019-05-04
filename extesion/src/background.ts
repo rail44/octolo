@@ -1,3 +1,7 @@
+const EXTENSION_ID = 'jp.rail44.octolo';
+
+const connection = chrome.runtime.connect();
+console.log(connection);
 const GITHUB_URL_PATTERN = "*://github.com/*/blob*";
 
 function getMenuTitle(editorName: string) {
@@ -21,15 +25,15 @@ interface GetConfig {
 }
 
 interface Config {
-  editor_list: Editor[],
+  editor_list: Editor[];
 }
 
 type ResponseMessage = Config;
 
 interface Editor {
-  shortcut?: string,
-  kind: string,
-  label: string,
+  shortcut?: string;
+  kind: string;
+  label: string;
 }
 
 function getMessage(url: URL, editor: string): Open | undefined {
@@ -64,12 +68,23 @@ function getMessage(url: URL, editor: string): Open | undefined {
 
 function sendToNative(message: Message, cb: (res: ResponseMessage) => void) {
   console.log(`sending message to local: ${JSON.stringify(message)}`);
-  chrome.runtime.sendNativeMessage("jp.rail44.octolo", message, cb);
+  chrome.runtime.sendNativeMessage(EXTENSION_ID, message, cb);
 }
 
-sendToNative({type: "GetConfig"}, (res) => {
+let config;
+
+sendToNative({ type: "GetConfig" }, res => {
   console.log(res);
-  for (const editor of res.editor_list) {
+  config = res;
+
+  connection.onMessage.addListener((msg) => {
+    console.log(msg);
+    if (msg.kind !== 'getConfig') {
+      return;
+    }
+  });
+
+  for (const editor of config.editor_list) {
     chrome.contextMenus.create({
       id: `remote-open-link-${editor.kind}`,
       title: getMenuTitle(editor.label),
@@ -85,7 +100,7 @@ sendToNative({type: "GetConfig"}, (res) => {
           return;
         }
 
-        sendToNative(message, (res) => console.log(res));
+        sendToNative(message, res => console.log(res));
       }
     });
 
@@ -100,7 +115,7 @@ sendToNative({type: "GetConfig"}, (res) => {
           return;
         }
 
-        sendToNative(message, (res) => console.log(res));
+        sendToNative(message, res => console.log(res));
       }
     });
   }

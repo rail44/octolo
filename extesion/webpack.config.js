@@ -5,10 +5,6 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.ts$/,
-        loader: "ts-loader"
-      },
-      {
         loader: "babel-loader",
         options: {
           presets: [
@@ -21,15 +17,20 @@ module.exports = {
           ]
         },
         test: /\.js$/
+      },
+      {
+        test: /\.ts$/,
+        loader: "ts-loader"
       }
     ]
   },
   entry: {
-    background: "./src/background.ts"
+    background: "./src/background.ts",
+    content: "./src/content.ts"
   },
   output: {
     filename: "[name].js",
-    path: path.resolve(__dirname, 'pkg/dist')
+    path: path.resolve(__dirname, "pkg/dist")
   },
   mode: "development",
   optimization: {
