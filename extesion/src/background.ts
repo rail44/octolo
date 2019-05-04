@@ -27,6 +27,7 @@ interface Config {
 type ResponseMessage = Config;
 
 interface Editor {
+  shortcut?: string,
   kind: string,
   label: string,
 }

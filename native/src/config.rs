@@ -24,8 +24,15 @@ pub struct Config {
 }
 
 #[derive(Deserialize, Serialize)]
+pub struct Editor {
+    pub shortcut: Option<String>,
+    #[serde(flatten)]
+    pub kind: EditorKind,
+}
+
+#[derive(Deserialize, Serialize)]
 #[serde(tag = "kind")]
-pub enum Editor {
+pub enum EditorKind {
     #[serde(rename = "visual-studio-code")]
     VisualStudioCode {
         bin: String,
@@ -52,20 +59,20 @@ pub enum Editor {
 
 impl Editor {
     pub fn get_label(&self) -> String {
-        match self {
-            Editor::VisualStudioCode { .. } => "Visual Studio Code".to_string(),
-            Editor::Neovim { .. } => "Neovim".to_string(),
-            Editor::JetBrainsIde { name, .. } => name.clone(),
-            Editor::Cmd { name, .. } => name.clone(),
+        match &self.kind {
+            EditorKind::VisualStudioCode { .. } => "Visual Studio Code".to_string(),
+            EditorKind::Neovim { .. } => "Neovim".to_string(),
+            EditorKind::JetBrainsIde { name, .. } => name.clone(),
+            EditorKind::Cmd { name, .. } => name.clone(),
         }
     }
 
     pub fn get_kind(&self) -> String {
-        match self {
-            Editor::VisualStudioCode { .. } => "visual-studio-code".to_string(),
-            Editor::Neovim { .. } => "neovim".to_string(),
-            Editor::JetBrainsIde { .. } => "jetbrains-ide".to_string(),
-            Editor::Cmd { name, .. } => name.clone(),
+        match &self.kind {
+            EditorKind::VisualStudioCode { .. } => "visual-studio-code".to_string(),
+            EditorKind::Neovim { .. } => "neovim".to_string(),
+            EditorKind::JetBrainsIde { .. } => "jetbrains-ide".to_string(),
+            EditorKind::Cmd { name, .. } => name.clone(),
         }
     }
 }
@@ -75,17 +82,17 @@ impl Config {
         let editor = self.choose_editor(&message.editor)?;
         let h = Handlebars::new();
         let work_dir = Path::new(&self.root).join(&h.render_template(&self.path, &message)?);
-        let command = match editor {
-            Editor::VisualStudioCode { bin, args, .. } => {
+        let command = match &editor.kind {
+            EditorKind::VisualStudioCode { bin, args, .. } => {
                 get_command_from_bin_and_args(&work_dir, bin, args, message)
             }
-            Editor::Neovim { address, .. } => {
+            EditorKind::Neovim { address, .. } => {
                 return Ok(neovim::open(address.as_ref().unwrap(), &work_dir, message)?);
             }
-            Editor::JetBrainsIde { bin, args, .. } => {
+            EditorKind::JetBrainsIde { bin, args, .. } => {
                 get_command_from_bin_and_args(&work_dir, bin, args, message)
             }
-            Editor::Cmd { cmd, .. } => {
+            EditorKind::Cmd { cmd, .. } => {
                 let (bin, args) = cmd.split_at(0);
                 let bin = bin.first().unwrap();
                 get_command_from_bin_and_args(&work_dir, bin, args, message)
