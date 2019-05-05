@@ -6,6 +6,7 @@ module.exports = {
     rules: [
       {
         loader: "babel-loader",
+        exclude: /node_modules/,
         options: {
           presets: [
             [
@@ -32,8 +33,10 @@ module.exports = {
     filename: "[name].js",
     path: path.resolve(__dirname, "pkg/dist")
   },
-  mode: "development",
   optimization: {
     minimizer: [new TerserPlugin()]
+  },
+  resolve: {
+    extensions: [".ts", ".js"]
   }
 };

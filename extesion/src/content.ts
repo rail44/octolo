@@ -1,7 +1,19 @@
-const HOGE_EXTENSION_ID = 'jp.rail44.octolo';
+import { Config } from "./config";
 
-const hoge_connection = chrome.runtime.connect();
-
-console.log('hoge');
-
-hoge_connection.postMessage({kind: 'getConfig'}); 
+chrome.runtime.sendMessage({ kind: "getConfig" }, (config: Config) => {
+  for (const editor of config.editor_list) {
+    if (editor.shortcut) {
+      console.log(editor);
+      window.addEventListener("keydown", event => {
+        console.log(event.key);
+        if (event.key === editor.shortcut) {
+          chrome.runtime.sendMessage({
+            kind: "open",
+            url: document.location.href,
+            editor: editor.kind
+          });
+        }
+      });
+    }
+  }
+});

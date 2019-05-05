@@ -1,7 +1,5 @@
-const EXTENSION_ID = 'jp.rail44.octolo';
+import { Config } from "./config";
 
-const connection = chrome.runtime.connect();
-console.log(connection);
 const GITHUB_URL_PATTERN = "*://github.com/*/blob*";
 
 function getMenuTitle(editorName: string) {
@@ -24,17 +22,7 @@ interface GetConfig {
   type: "GetConfig";
 }
 
-interface Config {
-  editor_list: Editor[];
-}
-
 type ResponseMessage = Config;
-
-interface Editor {
-  shortcut?: string;
-  kind: string;
-  label: string;
-}
 
 function getMessage(url: URL, editor: string): Open | undefined {
   const paths = url.pathname.split("/").filter(p => p !== "");
@@ -68,19 +56,29 @@ function getMessage(url: URL, editor: string): Open | undefined {
 
 function sendToNative(message: Message, cb: (res: ResponseMessage) => void) {
   console.log(`sending message to local: ${JSON.stringify(message)}`);
-  chrome.runtime.sendNativeMessage(EXTENSION_ID, message, cb);
+  chrome.runtime.sendNativeMessage("jp.rail44.octolo", message, cb);
 }
 
-let config;
+let config: Config;
 
 sendToNative({ type: "GetConfig" }, res => {
   console.log(res);
   config = res;
 
-  connection.onMessage.addListener((msg) => {
+  chrome.runtime.onMessage.addListener((msg, _, cb) => {
     console.log(msg);
-    if (msg.kind !== 'getConfig') {
-      return;
+    if (msg.kind === "getConfig") {
+      cb(config);
+      return true;
+    }
+
+    if (msg.kind === "open") {
+        const message = getMessage(new URL(msg.url), msg.editor);
+        if (!message) {
+          return;
+        }
+
+        sendToNative(message, res => console.log(res));
     }
   });
 
