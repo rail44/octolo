@@ -62,11 +62,9 @@ function sendToNative(message: Message, cb: (res: ResponseMessage) => void) {
 let config: Config;
 
 sendToNative({ type: "GetConfig" }, res => {
-  console.log(res);
   config = res;
 
   chrome.runtime.onMessage.addListener((msg, _, cb) => {
-    console.log(msg);
     if (msg.kind === "getConfig") {
       cb(config);
       return true;
