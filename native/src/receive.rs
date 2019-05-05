@@ -38,6 +38,7 @@ struct ConfigOutput {
 
 #[derive(Serialize)]
 struct EditorOutput {
+    shortcut: Option<String>,
     kind: String,
     label: String,
 }
@@ -49,6 +50,7 @@ impl From<Config> for ConfigOutput {
                 .editors
                 .iter()
                 .map(|e| EditorOutput {
+                    shortcut: e.shortcut.clone(),
                     kind: e.get_kind(),
                     label: e.get_label(),
                 })

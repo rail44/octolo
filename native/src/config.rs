@@ -71,7 +71,7 @@ impl Editor {
         match &self.kind {
             EditorKind::VisualStudioCode { .. } => "visual-studio-code".to_string(),
             EditorKind::Neovim { .. } => "neovim".to_string(),
-            EditorKind::JetBrainsIde { .. } => "jetbrains-ide".to_string(),
+            EditorKind::JetBrainsIde { name, .. } => name.clone(),
             EditorKind::Cmd { name, .. } => name.clone(),
         }
     }

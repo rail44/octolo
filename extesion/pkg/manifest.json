@@ -12,5 +12,11 @@
   "background": {
     "scripts": ["dist/background.js"]
   },
-  "permissions": ["nativeMessaging", "contextMenus"]
+  "permissions": ["nativeMessaging", "contextMenus"],
+  "content_scripts": [
+    {
+      "matches": ["*://github.com/*/blob*"],
+      "js": ["dist/content.js"]
+    }
+  ]
 }

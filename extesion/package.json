@@ -8,17 +8,19 @@
     "build": "rm -rf pkg/dist && webpack --mode production && web-ext build --overwrite-dest -s pkg"
   },
   "devDependencies": {
-    "@babel/core": "^7.4.3",
-    "@babel/preset-env": "^7.4.3",
+    "@babel/core": "^7.4.4",
+    "@babel/preset-env": "^7.4.4",
     "@types/chrome": "0.0.82",
     "babel-loader": "^8.0.5",
     "prettier": "^1.17.0",
     "terser-webpack-plugin": "^1.2.3",
-    "ts-loader": "^5.3.3",
-    "typescript": "^3.4.3",
+    "ts-loader": "^5.4.5",
+    "typescript": "^3.4.5",
     "web-ext": "^3.0.0",
     "webpack": "^4.30.0",
-    "webpack-cli": "^3.3.0"
+    "webpack-cli": "^3.3.2"
   },
-  "dependencies": {}
+  "dependencies": {
+    "hotkeys-js": "^3.6.4"
+  }
 }
