@@ -15,7 +15,7 @@
   "permissions": ["nativeMessaging", "contextMenus"],
   "content_scripts": [
     {
-      "matches": ["*://github.com/*/blob*"],
+      "matches": ["*://github.com/*"],
       "js": ["dist/content.js"]
     }
   ]

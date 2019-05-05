@@ -1,6 +1,5 @@
 import { Config } from "./config";
-
-const GITHUB_URL_PATTERN = "*://github.com/*/blob*";
+import { URL_PATTERN } from "./util";
 
 function getMenuTitle(editorName: string) {
   return `Open with ${editorName}`;
@@ -62,6 +61,7 @@ function sendToNative(message: Message, cb: (res: ResponseMessage) => void) {
 let config: Config;
 
 sendToNative({ type: "GetConfig" }, res => {
+  console.log(res);
   config = res;
 
   chrome.runtime.onMessage.addListener((msg, _, cb) => {
@@ -85,7 +85,7 @@ sendToNative({ type: "GetConfig" }, res => {
       id: `remote-open-link-${editor.kind}`,
       title: getMenuTitle(editor.label),
       contexts: ["link"],
-      targetUrlPatterns: [GITHUB_URL_PATTERN],
+      targetUrlPatterns: [URL_PATTERN],
       onclick: ({ linkUrl }) => {
         if (!linkUrl) {
           return;
@@ -104,7 +104,7 @@ sendToNative({ type: "GetConfig" }, res => {
       id: `remote-open-page-${editor.kind}`,
       title: getMenuTitle(editor.label),
       contexts: ["page"],
-      documentUrlPatterns: [GITHUB_URL_PATTERN],
+      documentUrlPatterns: [URL_PATTERN],
       onclick: ({ pageUrl }) => {
         const message = getMessage(new URL(pageUrl), editor.kind);
         if (!message) {
