@@ -33,6 +33,12 @@ fn main() {
                     Arg::with_name("write")
                         .short("w")
                         .help("Write manifest insted of show"),
+                )
+                .arg(
+                    Arg::with_name("chrome_extension_id")
+                        .long("chrome-extension-id")
+                        .takes_value(true)
+                        .help("Alternative extension ID for Chrome/Chromium"),
                 ),
         )
         .subcommand(
@@ -46,7 +52,8 @@ fn main() {
         .get_matches();
     if let Some(c) = matches.subcommand_matches("manifest") {
         let write = c.is_present("write");
-        manifest(config.browser_list, write).unwrap();
+        let chrome_extension_id = c.value_of("chrome_extension_id");
+        manifest(config.browser_list, write, chrome_extension_id).unwrap();
         return;
     }
     if let Some(c) = matches.subcommand_matches("config") {

@@ -69,9 +69,14 @@ enum Manifest {
     },
 }
 
+static DEFAULT_CHROME_EXTENSION_ID: &str = "igdmgdknajejkdpaonpnpjedakhppiob";
+
 impl Manifest {
     #[cfg(target_family = "unix")]
-    pub fn new(browser: &Browser) -> Result<Self, failure::Error> {
+    pub fn new(
+        browser: &Browser,
+        chrome_extension_id: Option<&str>,
+    ) -> Result<Self, failure::Error> {
         let path = current_exe()?.to_str().unwrap().to_string();
         Ok(match browser {
             Browser::Firefox => Manifest::Firefox {
@@ -86,21 +91,25 @@ impl Manifest {
                 description: "Open files with local editor from GitHub web".to_string(),
                 path,
                 _type: "stdio".to_string(),
-                allowed_origins: vec![
-                    "chrome-extension://igdmgdknajejkdpaonpnpjedakhppiob/".to_string()
-                ],
+                allowed_origins: vec![format!(
+                    "chrome-extension://{}/",
+                    chrome_extension_id.unwrap_or(DEFAULT_CHROME_EXTENSION_ID)
+                )],
             },
         })
     }
 }
-
 static FILE_NAME: &str = "jp.rail44.octolo.json";
 
-pub fn manifest(browser_list: Vec<Browser>, write: bool) -> Result<(), failure::Error> {
+pub fn manifest(
+    browser_list: Vec<Browser>,
+    write: bool,
+    chrome_extension_id: Option<&str>,
+) -> Result<(), failure::Error> {
     let home = home_dir().ok_or(crate::Error::CouldNotDetermineHomeDir)?;
     let manifest_list = browser_list
         .iter()
-        .map(|browser| (browser, Manifest::new(browser)));
+        .map(|browser| (browser, Manifest::new(browser, chrome_extension_id)));
     for (browser, manifest) in manifest_list {
         let manifest = manifest?;
         if write {
