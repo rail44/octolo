@@ -58,27 +58,24 @@ function sendToNative(message: Message, cb: (res: ResponseMessage) => void) {
   chrome.runtime.sendNativeMessage("jp.rail44.octolo", message, cb);
 }
 
-let config: Config;
+chrome.runtime.onMessage.addListener((msg, _, cb) => {
+  if (msg.kind === "getConfig") {
+    sendToNative({ type: "GetConfig" }, res => cb(res));
+    return true;
+  }
 
-sendToNative({ type: "GetConfig" }, res => {
-  console.log(res);
-  config = res;
-
-  chrome.runtime.onMessage.addListener((msg, _, cb) => {
-    if (msg.kind === "getConfig") {
-      cb(config);
-      return true;
+  if (msg.kind === "open") {
+    const message = getMessage(new URL(msg.url), msg.editor);
+    if (!message) {
+      return;
     }
 
-    if (msg.kind === "open") {
-        const message = getMessage(new URL(msg.url), msg.editor);
-        if (!message) {
-          return;
-        }
+    sendToNative(message, res => console.log(res));
+  }
+});
 
-        sendToNative(message, res => console.log(res));
-    }
-  });
+sendToNative({ type: "GetConfig" }, config => {
+  console.log(config);
 
   for (const editor of config.editor_list) {
     chrome.contextMenus.create({

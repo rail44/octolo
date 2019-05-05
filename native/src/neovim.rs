@@ -13,6 +13,6 @@ pub fn open(
     let mut neovim = Neovim::new(session);
     neovim.command(&format!("cd {}", work_dir.to_str().unwrap()))?;
     neovim.command(&format!("tabedit {}", message.path))?;
-    neovim.input(&format!("{}G", message.line))?;
+    neovim.input(&format!("{}gg", message.line))?;
     Ok(json!({}))
 }
