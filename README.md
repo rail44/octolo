@@ -50,7 +50,7 @@ $ chmod a+x octolo
 ```sh
 # In any directory conteined in $PATH
 $ curl -Lo octolo https://github.com/rail44/octolo/releases/latest/download/octolo-x86_64-apple-darwin
-$ chmod a+x
+$ chmod a+x octolo
 ```
 
 #### with Cargo
